@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "es2019",
     "lib": [
       "dom",
       "dom.iterable",
@@ -12,19 +12,20 @@
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "module": "commonjs",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "outDir": "./dist",
-    "baseUrl": "./",
+    "outDir": "lib/es",
     "noEmit": false,
     "declaration": true
   },
   "include": [
-    "**/*.ts"
+    "**/*.ts",
   ],
   "exclude": [
     "node_modules",
+    "lib",
     "examples"
   ],
-  "type": "commonjs"
+  "type": "module"
 }
