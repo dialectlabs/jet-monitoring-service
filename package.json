@@ -1,7 +1,7 @@
 {
-  "name": "@dialectlabs/monitor",
+  "name": "@dialectlabs/jet-monitoring-service",
   "version": "0.1.0",
-  "repository": "git@github.com:dialectlabs/monitor.git",
+  "repository": "git@github.com:dialectlabs/jet-monitoring-service.git",
   "author": "dialectlabs",
   "license": "MIT",
   "scripts": {},
