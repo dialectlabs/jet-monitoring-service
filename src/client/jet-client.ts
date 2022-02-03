@@ -45,6 +45,7 @@ const createClients = async (n: number): Promise<void> => {
       deleteDialect(program, dialect, it);
     });
   });
+  console.log(`Started ${n} jet clients`);
 
   await sleep(Duration.fromObject({ weeks: 1 }).toMillis());
 };

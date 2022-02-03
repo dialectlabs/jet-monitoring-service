@@ -20,7 +20,7 @@ const JET_DATASOURCE_METADATA: DataSourceMetadata = {
   ],
 };
 
-export class JetDataSources implements PollableDataSource<number> {
+export class JetDataSource implements PollableDataSource<number> {
   constructor(private readonly jetClient: JetClient) {}
 
   async connect(): Promise<DataSourceMetadata> {
@@ -57,13 +57,13 @@ export class JetDataSources implements PollableDataSource<number> {
 }
 
 export class FixedUserJetDataSource implements PollableDataSource<number> {
-  private readonly delegate: JetDataSources;
+  private readonly delegate: JetDataSource;
 
   constructor(
     jetClient: JetClient,
     private readonly userToGetDataFrom: ResourceId,
   ) {
-    this.delegate = new JetDataSources(jetClient);
+    this.delegate = new JetDataSource(jetClient);
   }
 
   async connect(): Promise<DataSourceMetadata> {
