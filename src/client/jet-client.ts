@@ -42,7 +42,7 @@ const createClients = async (n: number): Promise<void> => {
     ]);
     process.on('SIGINT', async () => {
       console.log('Deleting dialect');
-      await deleteDialect(program, dialect, it);
+      deleteDialect(program, dialect, it);
     });
   });
 
