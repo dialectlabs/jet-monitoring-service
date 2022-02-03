@@ -24,7 +24,7 @@
 "@dialectlabs/monitor@file:../monitor":
   version "0.1.0"
   dependencies:
-    "@dialectlabs/web3" "file:../../../Library/Caches/Yarn/v6/npm-@dialectlabs-monitor-0.1.0-533a7da3-a5d2-4a00-b090-6232d5509621-1643925317849/node_modules/@dialectlabs/protocol"
+    "@dialectlabs/web3" "file:../../../Library/Caches/Yarn/v6/npm-@dialectlabs-monitor-0.1.0-efd3fca5-8df7-4fe7-a192-dae8cc1e1378-1643927760116/node_modules/@dialectlabs/protocol"
     "@project-serum/anchor" "^0.18.0"
     "@solana/web3.js" "^1.27.0"
     luxon "^2.3.0"

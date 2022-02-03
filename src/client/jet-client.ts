@@ -5,7 +5,7 @@ import { programs, sleep, Wallet_ } from '@dialectlabs/web3';
 import { createDialect, deleteDialect, idl } from '@dialectlabs/web3';
 import { Duration } from 'luxon';
 
-const JET_PUBLIC_KEY = process.env.c as string;
+const JET_PUBLIC_KEY = process.env.JET_PUBLIC_KEY as string;
 
 const NETWORK_NAME = 'localnet';
 const connection = new web3.Connection(
