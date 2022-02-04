@@ -1,10 +1,13 @@
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { idl, programs, Wallet_ } from '@dialectlabs/web3';
-import { Monitors, ResourceId } from '@dialectlabs/monitor';
+import { MonitorFactory, ResourceId } from '@dialectlabs/monitor';
 import { Idl, Program, Provider } from '@project-serum/anchor';
 import { JetClient } from '@jet-lab/jet-engine';
+import {
+  jetSubscriberStateMonitorPipelines,
+  jetUnicastMonitorPipelines,
+} from './jet-pipeline';
 import { FixedUserJetDataSource } from './jet-data-sources';
-import { jetEventDetectionPipelines } from './jet-pipeline';
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const jetKeypair: Keypair = Keypair.fromSecretKey(
@@ -49,13 +52,21 @@ function getJetClient(): Promise<JetClient> {
 }
 
 async function run() {
-  const monitor = Monitors.createUnicast(
+  const monitorFactory = new MonitorFactory({
+    dialectProgram: getDialectProgram(),
+    monitorKeypair: jetKeypair,
+  });
+
+  const unicastMonitor = monitorFactory.createUnicastMonitor(
     new FixedUserJetDataSource(await getJetClient(), getJetUserToGetDataFrom()),
-    jetEventDetectionPipelines,
-    getDialectProgram(),
-    jetKeypair,
+    jetUnicastMonitorPipelines,
   );
-  await monitor.start();
+  await unicastMonitor.start();
+
+  const subscriberEventMonitor = monitorFactory.createSubscriberEventMonitor(
+    jetSubscriberStateMonitorPipelines,
+  );
+  await subscriberEventMonitor.start();
 }
 
 run();

@@ -4,6 +4,7 @@ import {
   ParameterId,
   PipeLogLevel,
   setPipeLogLevel,
+  SubscriberEvent,
 } from '@dialectlabs/monitor';
 import { C_RATIO_PARAMETER_ID } from './jet-data-sources';
 import { Duration } from 'luxon';
@@ -42,7 +43,7 @@ const collateralizationRatioWarnings: EventDetectionPipeline<number> = (
     )
     .pipe(Operators.Utility.log(PipeLogLevel.INFO));
 
-export const jetEventDetectionPipelines: Record<
+export const jetUnicastMonitorPipelines: Record<
   ParameterId,
   EventDetectionPipeline<number>[]
 > = Object.fromEntries([
@@ -51,3 +52,25 @@ export const jetEventDetectionPipelines: Record<
     [collateralizationRatioNotifications, collateralizationRatioWarnings],
   ],
 ]);
+
+const welcomeMessagePipeline: EventDetectionPipeline<SubscriberEvent> = (
+  source,
+) =>
+  source
+    .pipe(Operators.Utility.log(PipeLogLevel.INFO))
+    .pipe(
+      Operators.Transform.filter(
+        ({ parameterData: { data } }) => data === 'added',
+      ),
+    )
+    .pipe(
+      Operators.Event.info(
+        'Welcome',
+        () => `Thanks for subscribing for Jet Notifications (managed by Dialect). 
+You'll receive daily notifications about your collateralization ratio & risk of liquidation warnings.`,
+      ),
+    )
+    .pipe(Operators.Utility.log(PipeLogLevel.INFO));
+
+export const jetSubscriberStateMonitorPipelines: EventDetectionPipeline<SubscriberEvent>[] =
+  [welcomeMessagePipeline];
