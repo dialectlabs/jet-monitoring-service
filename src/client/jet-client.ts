@@ -1,9 +1,16 @@
 import * as web3 from '@solana/web3.js';
 import { PublicKey } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
-import { programs, sleep, Wallet_ } from '@dialectlabs/web3';
-import { createDialect, deleteDialect, idl } from '@dialectlabs/web3';
-import { Duration } from 'luxon';
+import {
+  createDialect,
+  deleteDialect,
+  getDialectForMembers,
+  idl,
+  Member,
+  programs,
+  sleep,
+  Wallet_,
+} from '@dialectlabs/web3';
 
 const JET_PUBLIC_KEY = process.env.JET_PUBLIC_KEY as string;
 
@@ -30,7 +37,7 @@ const createClients = async (n: number): Promise<void> => {
   await fundKeypairs(program, clients);
 
   clients.map(async (it) => {
-    const dialect = await createDialect(program, it, [
+    const members: Member[] = [
       {
         publicKey: new PublicKey(JET_PUBLIC_KEY),
         scopes: [false, true],
@@ -39,15 +46,22 @@ const createClients = async (n: number): Promise<void> => {
         publicKey: it.publicKey,
         scopes: [true, true],
       },
-    ]);
+    ];
+    const dialect = await createDialect(program, it, members);
     process.on('SIGINT', async () => {
       console.log('Deleting dialect');
       deleteDialect(program, dialect, it);
     });
+    while (true) {
+      const dialectAccount = await getDialectForMembers(program, members, it);
+      console.log(
+        it.publicKey.toBase58(),
+        dialectAccount.dialect.messages.map((it) => it.text),
+      );
+      await sleep(5000);
+    }
   });
   console.log(`Started ${n} jet clients`);
-
-  await sleep(Duration.fromObject({ weeks: 1 }).toMillis());
 };
 
 const fundKeypairs = async (
