@@ -61,7 +61,7 @@ async function run() {
   const unicastMonitor = monitorFactory.createUnicastMonitor(
     new FixedUserJetDataSource(await getJetClient(), getJetUserToGetDataFrom()),
     jetUnicastMonitorPipelines,
-    Duration.fromObject({ seconds: 10 }),
+    Duration.fromObject({ seconds: 20 }),
   );
   await unicastMonitor.start();
 
