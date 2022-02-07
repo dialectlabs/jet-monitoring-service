@@ -1,10 +1,13 @@
-import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import {
   JET_MARKET_ADDRESS_DEVNET,
   JetClient,
+  JetMarket,
   JetObligation,
+  JetReserve,
+  JetUser,
 } from '@jet-lab/jet-engine';
+import BN from 'bn.js';
 
 export type Mint = {
   asset: 'USDC' | 'Solana' | 'Bitcoin' | 'Ether';
@@ -20,13 +23,28 @@ export type MintPosition = {
 };
 
 export async function getCollateralizationRatio(
-  user: PublicKey,
+  userPublicKey: PublicKey,
   jetClient: JetClient,
 ) {
-  const obligation = await JetObligation.load(
+  // Load devnet market data from RPC
+  const market = await JetMarket.load(jetClient, JET_MARKET_ADDRESS_DEVNET);
+  // Load all reserves
+  const reserves = await JetReserve.loadMultiple(jetClient, market);
+  // Load user data
+  const user = await JetUser.load(jetClient, market, reserves, userPublicKey);
+  // create obligation
+  const obligation = JetObligation.create(
+    market,
+    user,
+    reserves.map((reserve) => reserve.data),
+  );
+
+  // All these can be condensed to
+  const userObligation = await JetObligation.load(
     jetClient,
     JET_MARKET_ADDRESS_DEVNET,
-    user,
+    reserves,
+    userPublicKey,
   );
 
   const mints: Mint[] = [
@@ -61,12 +79,13 @@ export async function getCollateralizationRatio(
         ...m,
         depositedUsd: position.collateralBalance
           .muln(position.reserve.priceData.price || 1) // 1 to handle USDC
-          .div(new BN(m.decimals))
-          .toNumber(),
+          .divb(new BN(m.decimals))
+          .lamports.toNumber(),
+        // .toNumber(),
         borrowedUsd: position.loanBalance
           .muln(position.reserve.priceData.price || 1) // 1 to handle USDC
-          .div(new BN(m.decimals))
-          .toNumber(),
+          .divb(new BN(m.decimals))
+          .lamports.toNumber(),
       }
     );
   });
