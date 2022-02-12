@@ -19,5 +19,5 @@ PRIVATE_KEY=$(cat ${your_path}/jet-service-dev-local-key.json) ts-node src/serve
 
 ```
 export your_path=~/projects/dialect
-JET_PUBLIC_KEY=$(cat ${your_path}/jet-service-dev-local-key.pub) ts-node src/client/jet-client.ts
+JET_PUBLIC_KEY=$(solana address --keypair ${your_path}/jet-service-dev-local-key.json) USER_PRIVATE_KEY=$(cat /path/to/your/keypair.json) ts-node src/client/jet-client.ts
 ```
