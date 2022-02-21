@@ -1,6 +1,12 @@
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { idl, programs, Wallet_ } from '@dialectlabs/web3';
-import { Data, Monitor, Monitors, Pipelines, ResourceId } from '@dialectlabs/monitor';
+import {
+  Data,
+  Monitor,
+  Monitors,
+  Pipelines,
+  ResourceId,
+} from '@dialectlabs/monitor';
 import { Idl, Program, Provider } from '@project-serum/anchor';
 import BN from 'bn.js';
 import {
@@ -12,6 +18,7 @@ import {
 } from '@jet-lab/jet-engine';
 import { Duration } from 'luxon';
 import { MintPosition, mints } from './jet-api';
+import * as anchor from '@project-serum/anchor';
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const jetKeypair: Keypair = Keypair.fromSecretKey(
@@ -20,7 +27,7 @@ const jetKeypair: Keypair = Keypair.fromSecretKey(
 const wallet = Wallet_.embedded(jetKeypair.secretKey);
 
 function getDialectProgram(): Program {
-    const dialectConnection = new Connection(
+  const dialectConnection = new Connection(
     process.env.RPC_URL || 'http://localhost:8899',
     'recent',
   );
@@ -97,29 +104,28 @@ async function run() {
     .poll(async (subscribers: ResourceId[]) => {
       console.log(`Polling data for ${subscribers.length} jet subscribers`);
       // Load devnet market data from RPC
-      const market = await JetMarket.load(
-        jetClient,
-        JET_MARKET_ADDRESS_DEVNET,
-      );
+      const market = await JetMarket.load(jetClient, JET_MARKET_ADDRESS_DEVNET);
       // Load all reserves
       const reserves = await JetReserve.loadMultiple(jetClient, market);
 
-      const data: Promise<Data<DataType>>[] = subscribers.map(async (resourceId) => {
-        const obligation = await JetObligation.load(
-          jetClient,
-          JET_MARKET_ADDRESS_DEVNET,
-          reserves,
-          resourceId,
-        );
-        return {
-          data:{
-            cratio: getCratio(obligation),
-          },
-          resourceId,
-        };
-      });
-      return Promise.all(data).then(datum => datum);
-    }, Duration.fromObject({ seconds: 3 }))
+      const data: Promise<Data<DataType>>[] = subscribers.map(
+        async (resourceId) => {
+          const obligation = await JetObligation.load(
+            jetClient,
+            JET_MARKET_ADDRESS_DEVNET,
+            reserves,
+            resourceId,
+          );
+          return {
+            data: {
+              cratio: getCratio(obligation),
+            },
+            resourceId,
+          };
+        },
+      );
+      return Promise.all(data).then((datum) => datum);
+    }, Duration.fromObject({ seconds: 15 }))
     .transform<number>({
       keys: ['cratio'],
       pipelines: [
@@ -148,7 +154,7 @@ async function run() {
           },
           {
             type: 'throttle-time',
-            timeSpan: Duration.fromObject({ minutes: 5 }),
+            timeSpan: Duration.fromObject({ minutes: 1 }),
           },
         ),
       ],

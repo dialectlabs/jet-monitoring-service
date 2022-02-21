@@ -14,9 +14,11 @@ import {
 import { DialectAccount } from '@dialectlabs/web3/lib/es';
 
 const JET_PUBLIC_KEY = process.env.JET_PUBLIC_KEY as string;
-const USER_PRIVATE_KEY = process.env.USER_PRIVATE_KEY ? Keypair.fromSecretKey(
-  new Uint8Array(JSON.parse(process.env.USER_PRIVATE_KEY as string)),
-) : Keypair.generate();
+const USER_PRIVATE_KEY = process.env.USER_PRIVATE_KEY
+  ? Keypair.fromSecretKey(
+      new Uint8Array(JSON.parse(process.env.USER_PRIVATE_KEY as string)),
+    )
+  : Keypair.generate();
 
 const NETWORK_NAME = 'localnet';
 const connection = new web3.Connection(
@@ -25,7 +27,9 @@ const connection = new web3.Connection(
 );
 
 const createClients = async (): Promise<void> => {
-  console.log(`Creating dialect client for user wallet ${USER_PRIVATE_KEY.publicKey.toBase58()} with target ${JET_PUBLIC_KEY}`);
+  console.log(
+    `Creating dialect client for user wallet ${USER_PRIVATE_KEY.publicKey.toBase58()} with target ${JET_PUBLIC_KEY}`,
+  );
 
   const clients = [USER_PRIVATE_KEY];
   const wallet = Wallet_.embedded(clients[0].secretKey);
