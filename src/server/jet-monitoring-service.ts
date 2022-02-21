@@ -45,7 +45,7 @@ function getDialectProgram(): Program {
 
 function getJetClient(): Promise<JetClient> {
   const jetConnection = new Connection(
-    'https://api.devnet.solana.com',
+    'https://dialect.devnet.rpcpool.com/ee21d5f582c150119dd6475765b3',
     Provider.defaultOptions(),
   );
   const jetProvider = new Provider(
