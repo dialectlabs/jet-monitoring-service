@@ -18,7 +18,6 @@ import {
 } from '@jet-lab/jet-engine';
 import { Duration } from 'luxon';
 import { MintPosition, mints } from './jet-api';
-import * as anchor from '@project-serum/anchor';
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const jetKeypair: Keypair = Keypair.fromSecretKey(
@@ -116,16 +115,17 @@ async function run() {
             reserves,
             resourceId,
           );
+          const cratio = getCratio(obligation);
           return {
             data: {
-              cratio: getCratio(obligation),
+              cratio,
             },
             resourceId,
           };
         },
       );
       return Promise.all(data).then((datum) => datum);
-    }, Duration.fromObject({ seconds: 15 }))
+    }, Duration.fromObject({ seconds: 5 }))
     .transform<number>({
       keys: ['cratio'],
       pipelines: [
@@ -136,12 +136,27 @@ async function run() {
           },
           {
             messageBuilder: (value) =>
-              `Warning: Your cratio (${value}) has dropped below the ${unhealthyCRatioWarningThreshold} unhealthy threshold`,
+            `⚠️ Warning! Your cratio is ${value}%. It has dropped below the ${unhealthyCRatioWarningThreshold}% threshold and is now considered unhealthy. If it drops any further, you may soon be at risk of liquidation.`,
+          },
+          // {
+          //   type: 'throttle-time',
+          //   timeSpan: Duration.fromObject({ minutes: 5 }),
+          // },
+        ),
+        Pipelines.threshold(
+          {
+            type: 'rising-edge',
+            threshold: unhealthyCRatioWarningThreshold,
           },
           {
-            type: 'throttle-time',
-            timeSpan: Duration.fromObject({ minutes: 5 }),
+            messageBuilder: (value) =>
+            `✅ Your C-Ratio has risen back above the ${unhealthyCRatioWarningThreshold}% unhealthy threshold, and is now ${value}%.`,
           },
+          // Optionally turn on throttling, to limit to one message in a given time window.
+          // {
+          //   type: 'throttle-time',
+          //   timeSpan: Duration.fromObject({ minutes: 5 }),
+          // },
         ),
         Pipelines.threshold(
           {
@@ -150,12 +165,28 @@ async function run() {
           },
           {
             messageBuilder: (value) =>
-              `Danger: Your cratio (${value}) has dropped below the ${liquidationWarningThreshold} liquidation threshold, and is now at risk of liquidation.`,
+              `🚨 Danger! Your C-Ratio is ${value}%, and has dropped below the ${liquidationWarningThreshold}% liquidation threshold. You are now at risk of liquidation.`,
+          },
+          // Optionally turn on throttling, to limit to one message in a given time window.
+          // {
+          //   type: 'throttle-time',
+          //   timeSpan: Duration.fromObject({ minutes: 1 }),
+          // },
+        ),
+        Pipelines.threshold(
+          {
+            type: 'rising-edge',
+            threshold: liquidationWarningThreshold,
           },
           {
-            type: 'throttle-time',
-            timeSpan: Duration.fromObject({ minutes: 1 }),
+            messageBuilder: (value) =>
+            `Your C-Ratio has risen back above the ${liquidationWarningThreshold}% liquidation threshold, and is now ${value}%.`,
           },
+          // Optionally turn on throttling, to limit to one message in a given time window.
+          // {
+          //   type: 'throttle-time',
+          //   timeSpan: Duration.fromObject({ minutes: 5 }),
+          // },
         ),
       ],
     })
