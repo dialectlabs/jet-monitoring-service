@@ -14,6 +14,11 @@ import {
 import { DialectAccount } from '@dialectlabs/web3/lib/es';
 
 const JET_PUBLIC_KEY = process.env.JET_PUBLIC_KEY as string;
+const USER_PRIVATE_KEY = process.env.USER_PRIVATE_KEY
+  ? Keypair.fromSecretKey(
+      new Uint8Array(JSON.parse(process.env.USER_PRIVATE_KEY as string)),
+    )
+  : Keypair.generate();
 
 const NETWORK_NAME = 'localnet';
 const connection = new web3.Connection(
@@ -21,12 +26,12 @@ const connection = new web3.Connection(
   'recent',
 );
 
-const createClients = async (n: number): Promise<void> => {
-  console.log(`Creating ${n} dialect clients with target ${JET_PUBLIC_KEY}`);
+const createClients = async (): Promise<void> => {
+  console.log(
+    `Creating dialect client for user wallet ${USER_PRIVATE_KEY.publicKey.toBase58()} with target ${JET_PUBLIC_KEY}`,
+  );
 
-  const clients = Array(n)
-    .fill(0)
-    .map((it) => web3.Keypair.generate());
+  const clients = [USER_PRIVATE_KEY];
   const wallet = Wallet_.embedded(clients[0].secretKey);
   // configure anchor
   anchor.setProvider(
@@ -144,7 +149,7 @@ const createClients = async (n: number): Promise<void> => {
 
 const fundKeypairs = async (
   program: anchor.Program,
-  keypairs: web3.Keypair[],
+  keypairs: Keypair[],
   amount: number | undefined = 10 * web3.LAMPORTS_PER_SOL,
 ): Promise<void> => {
   await Promise.all(
@@ -162,7 +167,7 @@ const fundKeypairs = async (
 };
 
 const main = async (): Promise<void> => {
-  await createClients(2);
+  await createClients();
 };
 
 main();
