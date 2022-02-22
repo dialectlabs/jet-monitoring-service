@@ -21,7 +21,7 @@
   dependencies:
     "@cspotcode/source-map-consumer" "0.8.0"
 
-"@dialectlabs/monitor@^0.1.21":
+"@dialectlabs/monitor@0.1.21":
   version "0.1.21"
   resolved "https://registry.yarnpkg.com/@dialectlabs/monitor/-/monitor-0.1.21.tgz#47d814680b1d0bdd05d76f0972f54fe658dcddac"
   integrity sha512-4Ik+4cW0Qk7QnnYUNnx+EgWY2m+Izq4ovbPPz//PKMqjihYT7d86ARtfi2/WhjTYPGLquyUJF63eEaxJ2053/A==
