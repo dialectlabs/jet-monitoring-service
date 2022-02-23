@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "repository": "git@github.com:dialectlabs/jet-monitoring-service.git",
   "author": "dialectlabs",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {},
   "dependencies": {
     "@dialectlabs/monitor": "0.1.21",
