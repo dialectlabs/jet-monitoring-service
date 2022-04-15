@@ -1,23 +1,79 @@
-# jet-monitoring-service
+# Monitoring service
 
-### generate a new keypair for jet monitoring service and fund it
+A reference implementation of a service running `@dialectlabs/monitor`.
+See https://github.com/dialectlabs/monitor for details on the notifications module.
+
+## Development
+
+### Prerequisites
+
+- Git
+- Yarn (<2)
+- Nodejs (>=16.10.0 <17)
+
+### Getting started with monitor development in this repo
+
+#### Install dependencies
+
+**yarn:**
+
+```shell
+yarn
+```
+
+#### Run a solana validator node with dialect program
+
+Please follow the instructions in https://github.com/dialectlabs/protocol#local-development
+
+### Running locally
+
+#### Step 1. Generate a new keypair for monitoring monitoring service and fund it
 
 ```bash
-export keypairs_dir=~/projects/dialect
-solana-keygen new --outfile ${keypairs_dir}/jet-service-dev-local-key.json
-solana-keygen pubkey ${keypairs_dir}/jet-service-dev-local-key.json > ${keypairs_dir}/jet-service-dev-local-key.pub
-solana -k ${keypairs_dir}/jet-service-dev-local-key.json airdrop 300
-```
-### start server
-
-```
-export keypairs_dir=~/projects/dialect
-PRIVATE_KEY=$(cat ${keypairs_dir}/jet-service-dev-local-key.json) ts-node src/server/jet-monitoring-service.ts
+export your_path=~/projects/dialect
+solana-keygen new --outfile ${your_path}/jet-monitoring-service-dev-local-key.json
+solana-keygen pubkey ${your_path}/jet-monitoring-service-dev-local-key.json > ${your_path}/jet-monitoring-service-dev-local-key.pub
+solana -k ${your_path}/jet-monitoring-service-dev-local-key.json airdrop 5
 ```
 
-### start client
+#### Step 2. Start server
 
+```shell
+export your_path=~/projects/dialect
+PRIVATE_KEY=$(cat ${your_path}/jet-monitoring-service-dev-local-key.json) yarn start:dev
 ```
-export keypairs_dir=~/projects/dialect
-JET_PUBLIC_KEY=$(solana address --keypair ${keypairs_dir}/jet-service-dev-local-key.json) USER_PRIVATE_KEY=$(cat ${keypairs_dir}/monitoring-service-dev-local-key.json) ts-node src/client/jet-client.ts
+
+#### Step 3. Start client
+
+```shell
+export your_path=~/projects/dialect
+MONITORING_SERVICE_PUBLIC_KEY=$(cat ${your_path}/jet-monitoring-service-dev-local-key.pub) ts-node test/dialect-clients.ts
+```
+
+#### Step 4. Look at client logs for notifications
+
+When both client and server are started, server will send notifications to clients
+
+### Containerization
+
+#### Build image (macOS)
+
+```shell
+brew install jq
+./docker-build.sh
+```
+
+#### Run container locally
+
+```shell
+export your_path=~/projects/dialect
+docker run --name dialectlabs_monitoring-service -e PRIVATE_KEY=$(cat ${your_path}/jet-monitoring-service-dev-local-key.json) dialectlab/monitoring-service:latest 
+```
+
+#### Publish image
+
+```shell
+brew install jq
+docker login
+./docker-publish.sh
 ```
