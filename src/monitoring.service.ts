@@ -13,11 +13,7 @@ import {
 } from '@dialectlabs/monitor';
 import { DialectConnection } from './dialect-connection';
 import { clusterApiUrl, Connection, Keypair, PublicKey } from '@solana/web3.js';
-import {
-  Provider,
-  BN,
-  Wallet,
-} from '@project-serum/anchor';
+import { Provider, BN, Wallet } from '@project-serum/anchor';
 import { Duration } from 'luxon';
 import {
   JET_MARKET_ADDRESS_DEVNET,
@@ -28,23 +24,14 @@ import {
 } from '@jet-lab/jet-engine';
 import { MintPosition, mints } from './jet-api';
 
-// TODO env variables
-const devnet = clusterApiUrl('devnet');
-const MAINNET_RPC_URL =
-  'https://solana-api.syndica.io/access-token/6sW38nSZ1Qm4WVRN4Vnbjb9EF2QudlpGZBToMtPyqoXqkIenDwJ5FVK1HdWSqqah/rpc';
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const jetKeypair: Keypair = Keypair.fromSecretKey(
-  new Uint8Array(JSON.parse(PRIVATE_KEY as string)),
-);
-const wallet = new Wallet(jetKeypair);
 function getJetClient(): Promise<JetClient> {
   const jetConnection = new Connection(
-    'https://dialect.devnet.rpcpool.com/ee21d5f582c150119dd6475765b3',
+    process.env.RPC_URL ?? 'https://api.devnet.solana.com',
     Provider.defaultOptions(),
   );
   const jetProvider = new Provider(
     jetConnection,
-    wallet,
+    new Wallet(Keypair.generate()),
     Provider.defaultOptions(),
   );
   return JetClient.connect(jetProvider, true);
@@ -306,7 +293,7 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
   }
 
   private constructUnhealthyWarningMessage(value: number): string {
-    return `Jet-Protocol: ⚠️ Warning! Your current collateral-ratio is ${value}%. It has dropped below the healthy threshold of ${healthyThreshodl}%. Please monitor your borrowing and lending closely. Your deposited assets will start being liquidated at ${liquidationThreshodl}%.`
+    return `Jet-Protocol: ⚠️ Warning! Your current collateral-ratio is ${value}%. It has dropped below the healthy threshold of ${healthyThreshodl}%. Please monitor your borrowing and lending closely. Your deposited assets will start being liquidated at ${liquidationThreshodl}%.`;
   }
 
   private constructHealthyMessage(value: number): string {

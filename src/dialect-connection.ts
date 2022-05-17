@@ -1,6 +1,6 @@
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
-import { Idl, Program, Provider } from '@project-serum/anchor';
-import { idl, programs, Wallet_ } from '@dialectlabs/web3';
+import { Idl, Program, Provider, Wallet } from '@project-serum/anchor';
+import { idl, programs } from '@dialectlabs/web3';
 
 export abstract class DialectConnection {
   abstract getKeypair(): Keypair;
@@ -12,7 +12,7 @@ export abstract class DialectConnection {
     const keypair: Keypair = Keypair.fromSecretKey(
       new Uint8Array(JSON.parse(PRIVATE_KEY as string)),
     );
-    const wallet = Wallet_.embedded(keypair.secretKey);
+    const wallet = new Wallet(keypair);
     const RPC_URL = process.env.RPC_URL || 'http://localhost:8899';
     console.log('RPC url', RPC_URL);
     const dialectConnection = new Connection(RPC_URL, 'recent');
