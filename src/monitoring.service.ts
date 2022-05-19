@@ -114,6 +114,7 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
             {
               type: 'falling-edge',
               threshold: healthyThreshodl,
+              limit: criticalThreshodl,
             },
             {
               type: 'throttle-time',
@@ -249,6 +250,7 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
             {
               type: 'rising-edge',
               threshold: criticalThreshodl,
+              limit: healthyThreshodl,
             },
             {
               type: 'throttle-time',
