@@ -34,7 +34,7 @@ function getJetClient(): Promise<JetClient> {
     new Wallet(Keypair.generate()),
     Provider.defaultOptions(),
   );
-  let useDevnet: boolean = process.env.JET_NETWORK?.includes("devnet") ? true : false;
+  let useDevnet: boolean = process.env.NETWORK_NAME?.includes("devnet") ? true : false;
   return JetClient.connect(jetProvider, useDevnet);
 }
 
