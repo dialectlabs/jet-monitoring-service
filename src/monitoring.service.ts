@@ -17,6 +17,7 @@ import { Provider, BN, Wallet } from '@project-serum/anchor';
 import { Duration } from 'luxon';
 import {
   JET_MARKET_ADDRESS_DEVNET,
+  JET_MARKET_ADDRESS,
   JetClient,
   JetMarket,
   JetObligation,
@@ -320,13 +321,14 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
   ): Promise<SourceData<UserObligation>[]> {
     console.log(`Polling data for ${subscribers.length} subscribers`);
     const jetClient = await getJetClient();
-    const market = await JetMarket.load(jetClient, JET_MARKET_ADDRESS_DEVNET);
+    const jetMarketAddress = jetClient.devnet === true ? JET_MARKET_ADDRESS_DEVNET : JET_MARKET_ADDRESS;
+    const market = await JetMarket.load(jetClient, jetMarketAddress);
     const reserves = await JetReserve.loadMultiple(jetClient, market);
     const data: Promise<SourceData<UserObligation>>[] = subscribers.map(
       async (resourceId) => {
         const obligation = await JetObligation.load(
           jetClient,
-          JET_MARKET_ADDRESS_DEVNET,
+          jetMarketAddress,
           reserves,
           resourceId,
         );
