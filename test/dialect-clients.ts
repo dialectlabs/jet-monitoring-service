@@ -13,12 +13,8 @@ import {
 } from '@dialectlabs/web3';
 import { DialectAccount } from '@dialectlabs/web3/lib/es';
 
-const JET_PUBLIC_KEY = process.env.JET_PUBLIC_KEY as string;
-const USER_PRIVATE_KEY = process.env.USER_PRIVATE_KEY
-  ? Keypair.fromSecretKey(
-      new Uint8Array(JSON.parse(process.env.USER_PRIVATE_KEY as string)),
-    )
-  : Keypair.generate();
+const MONITORING_SERVICE_PUBLIC_KEY = process.env
+  .MONITORING_SERVICE_PUBLIC_KEY as string;
 
 const NETWORK_NAME = 'localnet';
 const connection = new web3.Connection(
@@ -26,12 +22,20 @@ const connection = new web3.Connection(
   'recent',
 );
 
-const createClients = async (): Promise<void> => {
+const DIALECT_PROGRAM_ADDRESS = programs[NETWORK_NAME].programAddress;
+const createClients = async (n: number): Promise<void> => {
   console.log(
-    `Creating dialect client for user wallet ${USER_PRIVATE_KEY.publicKey.toBase58()} with target ${JET_PUBLIC_KEY}`,
+    `Creating ${n} dialect clients with target ${MONITORING_SERVICE_PUBLIC_KEY}`,
   );
 
-  const clients = [USER_PRIVATE_KEY];
+  const clients = Array(n)
+    .fill(0)
+    .map((it) => web3.Keypair.generate());
+
+  // TO TEST with your own keypair,
+  // comment out the clients array above, and use instead the following line:
+  //const clients = Array(web3.Keypair.fromSecretKey(new Uint8Array([/* Your keypair */])));
+  
   const wallet = Wallet_.embedded(clients[0].secretKey);
   // configure anchor
   anchor.setProvider(
@@ -39,7 +43,7 @@ const createClients = async (): Promise<void> => {
   );
   const program = new anchor.Program(
     idl as anchor.Idl,
-    new anchor.web3.PublicKey(programs[NETWORK_NAME].programAddress),
+    new anchor.web3.PublicKey(DIALECT_PROGRAM_ADDRESS),
   );
 
   await fundKeypairs(program, clients);
@@ -52,7 +56,7 @@ const createClients = async (): Promise<void> => {
       clients.map(async (owner) => {
         const members: Member[] = [
           {
-            publicKey: new PublicKey(JET_PUBLIC_KEY),
+            publicKey: new PublicKey(MONITORING_SERVICE_PUBLIC_KEY),
             scopes: [false, true],
           },
           {
@@ -113,7 +117,6 @@ const createClients = async (): Promise<void> => {
             const dialectAccount = await getDialectForMembers(
               program,
               members,
-              owner,
             );
             return [
               dialectAccount.publicKey.toString(),
@@ -149,7 +152,7 @@ const createClients = async (): Promise<void> => {
 
 const fundKeypairs = async (
   program: anchor.Program,
-  keypairs: Keypair[],
+  keypairs: web3.Keypair[],
   amount: number | undefined = 10 * web3.LAMPORTS_PER_SOL,
 ): Promise<void> => {
   await Promise.all(
@@ -167,7 +170,7 @@ const fundKeypairs = async (
 };
 
 const main = async (): Promise<void> => {
-  await createClients();
+  await createClients(2);
 };
 
 main();
