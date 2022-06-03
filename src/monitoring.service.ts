@@ -13,7 +13,8 @@ import {
 } from '@dialectlabs/monitor';
 import { DialectConnection } from './dialect-connection';
 import { clusterApiUrl, Connection, Keypair, PublicKey } from '@solana/web3.js';
-import { AnchorProvider, BN, Wallet } from '@project-serum/anchor';
+import { Provider, BN, Wallet } from '@project-serum/anchor';
+import { AnchorProvider } from 'anchor-new';
 import { Duration } from 'luxon';
 import {
   JET_MARKET_ADDRESS_DEVNET,

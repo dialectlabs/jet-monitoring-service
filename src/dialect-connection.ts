@@ -1,5 +1,5 @@
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
-import { Idl, Program, AnchorProvider, Wallet } from '@project-serum/anchor';
+import { Idl, Program, Provider, Wallet } from '@project-serum/anchor';
 import { idl, programs } from '@dialectlabs/web3';
 
 export abstract class DialectConnection {
@@ -16,10 +16,10 @@ export abstract class DialectConnection {
     const RPC_URL = process.env.RPC_URL || 'http://localhost:8899';
     console.log('RPC url', RPC_URL);
     const dialectConnection = new Connection(RPC_URL, 'recent');
-    const dialectProvider = new AnchorProvider(
+    const dialectProvider = new Provider(
       dialectConnection,
       wallet,
-      AnchorProvider.defaultOptions(),
+      Provider.defaultOptions(),
     );
     // @ts-ignore
     const NETWORK_NAME: 'mainnet-beta' | 'devnet' | 'localnet' =
