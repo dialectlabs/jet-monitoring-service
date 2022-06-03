@@ -13,7 +13,7 @@ import {
 } from '@dialectlabs/monitor';
 import { DialectConnection } from './dialect-connection';
 import { clusterApiUrl, Connection, Keypair, PublicKey } from '@solana/web3.js';
-import { Provider, BN, Wallet } from '@project-serum/anchor';
+import { AnchorProvider, BN, Wallet } from '@project-serum/anchor';
 import { Duration } from 'luxon';
 import {
   JET_MARKET_ADDRESS_DEVNET,
@@ -29,15 +29,14 @@ import { MintPosition, mints } from './jet-api';
 function getJetClient(): Promise<JetClient> {
   const jetConnection = new Connection(
     process.env.RPC_URL ?? 'https://api.devnet.solana.com',
-    Provider.defaultOptions(),
+    AnchorProvider.defaultOptions(),
   );
-  const jetProvider = new Provider(
+  const jetProvider = new AnchorProvider(
     jetConnection,
     new Wallet(Keypair.generate()),
-    Provider.defaultOptions(),
+    AnchorProvider.defaultOptions(),
   );
   let useDevnet: boolean = process.env.NETWORK_NAME?.includes("devnet") ? true : false;
-  // @ts-ignore
   return JetClient.connect(jetProvider, useDevnet);
 }
 
