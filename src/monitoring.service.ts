@@ -47,9 +47,9 @@ type UserObligation = {
   cratio: number;
 };
 
-const healthyThreshodl = 150;
-const criticalThreshodl = 135;
-const liquidationThreshodl = 125;
+const healthyThreshodl = 1.5;
+const criticalThreshodl = 1.35;
+const liquidationThreshodl = 1.25;
 
 function getCratio(obligation: JetObligation) {
   const positions: (MintPosition | undefined)[] = mints.map((m) => {
@@ -344,18 +344,15 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
           reserves,
           resourceId,
         );
-        this.logger.log("obligation.collateralRatio:");
-        console.log(obligation.collateralRatio);
-        const cratio = getCratio(obligation);
         this.logger.log(`Found obligation:`, obligation);
         console.log(obligation);
-        this.logger.log(`cratio is:`, cratio);
-        console.log(cratio);
+        this.logger.log("obligation.collateralRatio:");
+        console.log(obligation.collateralRatio);
         const sourceData: SourceData<UserObligation> = {
           groupingKey: resourceId.toBase58(),
           data: {
             user: resourceId,
-            cratio: cratio,
+            cratio: obligation.collateralRatio,
           },
         };
         return sourceData;
