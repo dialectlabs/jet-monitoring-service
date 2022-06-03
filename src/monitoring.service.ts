@@ -10,6 +10,7 @@ import {
   Pipelines,
   ResourceId,
   SourceData,
+  Data,
 } from '@dialectlabs/monitor';
 import { DialectConnection } from './dialect-connection';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
@@ -97,26 +98,26 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
       })
       .notify()
       .dialectThread(
-        ({ value }) => ({
-          message: `🛩 Jet-Protocol: ` + this.constructUnhealthyWarningMessage(value),
+        (ctx) => ({
+          message: `🛩 Jet-Protocol: ` + this.constructUnhealthyWarningMessage(ctx),
         }),
         { dispatch: 'unicast', to: ({ origin }) => origin.user },
       )
       .telegram(
-        ({ value }) => ({
-          body: `🛩 Jet-Protocol: ` + this.constructUnhealthyWarningMessage(value),
+        (ctx) => ({
+          body: `🛩 Jet-Protocol: ` + this.constructUnhealthyWarningMessage(ctx),
         }),
         { dispatch: 'unicast', to: ({ origin }) => origin.user },
       )
       .sms(
-        ({ value }) => ({
-          body: `🛩 Jet-Protocol: ` + this.constructUnhealthyWarningMessage(value),
+        (ctx) => ({
+          body: `🛩 Jet-Protocol: ` + this.constructUnhealthyWarningMessage(ctx),
         }),
         { dispatch: 'unicast', to: ({ origin }) => origin.user },
       )
       .email(
-        ({ value }) => {
-          const message = this.constructUnhealthyWarningMessage(value);
+        (ctx) => {
+          const message = this.constructUnhealthyWarningMessage(ctx);
           return {
             subject: '🛩 Jet-Protocol: ⚠️ Unhealthy Collateral-ratio',
             text: message,
@@ -142,26 +143,26 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
       })
       .notify()
       .dialectThread(
-        ({ value }) => ({
-          message: `🛩 Jet-Protocol: ` + this.constructHealthyMessage(value),
+        (ctx) => ({
+          message: `🛩 Jet-Protocol: ` + this.constructHealthyMessage(ctx),
         }),
         { dispatch: 'unicast', to: ({ origin }) => origin.user },
       )
       .telegram(
-        ({ value }) => ({
-          body: `🛩 Jet-Protocol: ` + this.constructHealthyMessage(value),
+        (ctx) => ({
+          body: `🛩 Jet-Protocol: ` + this.constructHealthyMessage(ctx),
         }),
         { dispatch: 'unicast', to: ({ origin }) => origin.user },
       )
       .sms(
-        ({ value }) => ({
-          body: `🛩 Jet-Protocol: ` + this.constructHealthyMessage(value),
+        (ctx) => ({
+          body: `🛩 Jet-Protocol: ` + this.constructHealthyMessage(ctx),
         }),
         { dispatch: 'unicast', to: ({ origin }) => origin.user },
       )
       .email(
-        ({ value }) => {
-          const message = this.constructHealthyMessage(value);
+        (ctx) => {
+          const message = this.constructHealthyMessage(ctx);
           return {
             subject: '🛩 Jet-Protocol: ✅ Healthy Collateral-ratio',
             text: message,
@@ -187,26 +188,26 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
       })
       .notify()
       .dialectThread(
-        ({ value }) => ({
-          message: `🛩 Jet-Protocol: ` + this.constructCriticalWarningMessage(value),
+        (ctx) => ({
+          message: `🛩 Jet-Protocol: ` + this.constructCriticalWarningMessage(ctx),
         }),
         { dispatch: 'unicast', to: ({ origin }) => origin.user },
       )
       .telegram(
-        ({ value }) => ({
-          body: `🛩 Jet-Protocol: ` + this.constructCriticalWarningMessage(value),
+        (ctx) => ({
+          body: `🛩 Jet-Protocol: ` + this.constructCriticalWarningMessage(ctx),
         }),
         { dispatch: 'unicast', to: ({ origin }) => origin.user },
       )
       .sms(
-        ({ value }) => ({
-          body: `🛩 Jet-Protocol: ` + this.constructCriticalWarningMessage(value),
+        (ctx) => ({
+          body: `🛩 Jet-Protocol: ` + this.constructCriticalWarningMessage(ctx),
         }),
         { dispatch: 'unicast', to: ({ origin }) => origin.user },
       )
       .email(
-        ({ value }) => {
-          const message = this.constructCriticalWarningMessage(value);
+        (ctx) => {
+          const message = this.constructCriticalWarningMessage(ctx);
           return {
             subject: '🛩 Jet-Protocol: 🚨 Critical Collateral-ratio',
             text: message,
@@ -233,26 +234,26 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
       })
       .notify()
       .dialectThread(
-        ({ value }) => ({
-          message: `🛩 Jet-Protocol: ` + this.constructCriticalRecoveredMessage(value),
+        (ctx) => ({
+          message: `🛩 Jet-Protocol: ` + this.constructCriticalRecoveredMessage(ctx),
         }),
         { dispatch: 'unicast', to: ({ origin }) => origin.user },
       )
       .telegram(
-        ({ value }) => ({
-          body: `🛩 Jet-Protocol: ` + this.constructCriticalRecoveredMessage(value),
+        (ctx) => ({
+          body: `🛩 Jet-Protocol: ` + this.constructCriticalRecoveredMessage(ctx),
         }),
-        { dispatch: 'unicast', to: ({ origin }) => origin.user },
+        { dispatch: 'unicast', to: (ctx) => ctx.origin.user },
       )
       .sms(
-        ({ value }) => ({
-          body: `🛩 Jet-Protocol: ` + this.constructCriticalRecoveredMessage(value),
+        (ctx) => ({
+          body: `🛩 Jet-Protocol: ` + this.constructCriticalRecoveredMessage(ctx),
         }),
         { dispatch: 'unicast', to: ({ origin }) => origin.user },
       )
       .email(
-        ({ value }) => {
-          const message = this.constructCriticalRecoveredMessage(value);
+        (ctx) => {
+          const message = this.constructCriticalRecoveredMessage(ctx);
           return {
             subject: '🛩 Jet-Protocol: ⚠️ Unhealthy Collateral-ratio',
             text: message,
@@ -266,23 +267,35 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     monitor.start();
   }
 
-  private constructUnhealthyWarningMessage(value: number): string {
-    const displayValue = (value * 100).toFixed(2);
+  private constructUnhealthyWarningMessage(ctx: Data<number, UserObligation>): string {
+    console.log("Dispatching message with ctx:");
+    console.log(`Context: `, ctx.context);
+    console.log(`Value: `, ctx.value);
+    const displayValue = (ctx.value * 100).toFixed(2);
     return `⚠️ Warning! Your current collateral-ratio is ${displayValue}%. It has dropped below the healthy threshold of ${healthyThreshodl * 100}%. Please monitor your borrowing and lending closely. Your deposited assets will start being liquidated at ${liquidationThreshodl * 100}%.`;
   }
 
-  private constructHealthyMessage(value: number): string {
-    const displayValue = (value * 100).toFixed(2);
+  private constructHealthyMessage(ctx: Data<number, UserObligation>): string {
+    console.log("Dispatching message with ctx:");
+    console.log(`Context: `, ctx.context);
+    console.log(`Value: `, ctx.value);
+    const displayValue = (ctx.value * 100).toFixed(2);
     return `✅ Your current collateral-ratio is ${displayValue}% - Your account is healthy.`;
   }
 
-  private constructCriticalWarningMessage(value: number): string {
-    const displayValue = (value * 100).toFixed(2);
+  private constructCriticalWarningMessage(ctx: Data<number, UserObligation>): string {
+    console.log("Dispatching message with ctx:");
+    console.log(`Context: `, ctx.context);
+    console.log(`Value: `, ctx.value);
+    const displayValue = (ctx.value * 100).toFixed(2);
     return `🚨 Warning! Your current collateral-ratio is ${displayValue}%, which is below the critical threshold of ${criticalThreshodl * 100}%. Please deposit more assets or repay your loans. Your deposited assets will start being liquidated at ${liquidationThreshodl * 100}%.`;
   }
 
-  private constructCriticalRecoveredMessage(value: number): string {
-    const displayValue = (value * 100).toFixed(2);
+  private constructCriticalRecoveredMessage(ctx: Data<number, UserObligation>): string {
+    console.log("Dispatching message with ctx:");
+    console.log(`Context: `, ctx.context);
+    console.log(`Value: `, ctx.value);
+    const displayValue = (ctx.value * 100).toFixed(2);
     return `⚠️ Your current collateral-ratio is ${displayValue}%, which is just above the critical threshold of ${criticalThreshodl * 100}%. Jet recommends keeping your collateral-ratio above the healthy threshold of ${healthyThreshodl * 100}%.`;
   }
 
