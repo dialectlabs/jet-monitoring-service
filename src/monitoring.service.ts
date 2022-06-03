@@ -18,11 +18,12 @@ import { Duration } from 'luxon';
 import {
   JET_MARKET_ADDRESS_DEVNET,
   JET_MARKET_ADDRESS,
-  JetClient,
+  //JetClient,
   JetMarket,
   JetObligation,
   JetReserve,
 } from '@jet-lab/jet-engine';
+import { JetClient } from "@jet-lab/jet-engine/dist/cjs/pools/client";
 import { MintPosition, mints } from './jet-api';
 
 function getJetClient(): Promise<JetClient> {
@@ -36,6 +37,7 @@ function getJetClient(): Promise<JetClient> {
     Provider.defaultOptions(),
   );
   let useDevnet: boolean = process.env.NETWORK_NAME?.includes("devnet") ? true : false;
+  // @ts-ignore
   return JetClient.connect(jetProvider, useDevnet);
 }
 
