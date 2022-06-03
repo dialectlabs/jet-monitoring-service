@@ -321,13 +321,18 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
   private async getSubscribersObligations(
     subscribers: ResourceId[],
   ): Promise<SourceData<UserObligation>[]> {
-    console.log(`Polling data for ${subscribers.length} subscribers`);
+    this.logger.log(`Polling data for ${subscribers.length} subscribers`);
     const jetClient = await getJetClient();
     const jetMarketAddress = jetClient.devnet === true ? JET_MARKET_ADDRESS_DEVNET : JET_MARKET_ADDRESS;
     const market = await JetMarket.load(jetClient, jetMarketAddress);
     const reserves = await JetReserve.loadMultiple(jetClient, market);
+    this.logger.log(`Using Jet Client: ${jetClient}`);
+    this.logger.log(`isDevnet: ${jetClient.devnet}`);
+    this.logger.log(`Using Jet Market: ${market}`);
+    this.logger.log(`Using Jet Reserves: ${reserves}`);
     const data: Promise<SourceData<UserObligation>>[] = subscribers.map(
       async (resourceId) => {
+        this.logger.log(`Loading obligation for subscriber ${resourceId.toBase58()}.`);
         const obligation = await JetObligation.load(
           jetClient,
           jetMarketAddress,
@@ -335,6 +340,8 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
           resourceId,
         );
         const cratio = getCratio(obligation);
+        this.logger.log(`Found obligation: ${obligation}`);
+        this.logger.log(`cratio is ${cratio}.`);
         const sourceData: SourceData<UserObligation> = {
           groupingKey: resourceId.toBase58(),
           data: {
