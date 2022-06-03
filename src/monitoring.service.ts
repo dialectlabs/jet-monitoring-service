@@ -26,6 +26,7 @@ import {
 } from '@jet-lab/jet-engine';
 //import { JetClient } from "@jet-lab/jet-engine/dist/cjs/pools/client";
 import { MintPosition, mints } from './jet-api';
+import { util } from 'prettier';
 
 function getJetClient(): Promise<JetClient> {
   const jetConnection = new Connection(
@@ -327,9 +328,13 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     const market = await JetMarket.load(jetClient, jetMarketAddress);
     const reserves = await JetReserve.loadMultiple(jetClient, market);
     this.logger.log(`Using Jet Client:`, jetClient);
+    console.log(jetClient);
     this.logger.log(`isDevnet:`, jetClient.devnet);
+    console.log(jetClient.devnet);
     this.logger.log(`Using Jet Market:`, market);
+    console.log(market);
     this.logger.log(`Using Jet Reserves:`, reserves);
+    console.log(reserves);
     const data: Promise<SourceData<UserObligation>>[] = subscribers.map(
       async (resourceId) => {
         this.logger.log(`Loading obligation for subscriber ${resourceId.toBase58()}.`);
@@ -341,7 +346,9 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
         );
         const cratio = getCratio(obligation);
         this.logger.log(`Found obligation:`, obligation);
+        console.log(obligation);
         this.logger.log(`cratio is:`, cratio);
+        console.log(cratio);
         const sourceData: SourceData<UserObligation> = {
           groupingKey: resourceId.toBase58(),
           data: {
