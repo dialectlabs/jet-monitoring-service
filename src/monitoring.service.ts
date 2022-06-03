@@ -12,8 +12,8 @@ import {
   SourceData,
 } from '@dialectlabs/monitor';
 import { DialectConnection } from './dialect-connection';
-import { clusterApiUrl, Connection, Keypair, PublicKey } from '@solana/web3.js';
-import { Provider, BN, Wallet } from '@project-serum/anchor';
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import { BN, Wallet } from '@project-serum/anchor';
 import { AnchorProvider } from 'anchor-new';
 import { Duration } from 'luxon';
 import {
@@ -24,9 +24,6 @@ import {
   JetObligation,
   JetReserve,
 } from '@jet-lab/jet-engine';
-//import { JetClient } from "@jet-lab/jet-engine/dist/cjs/pools/client";
-import { MintPosition, mints } from './jet-api';
-import { util } from 'prettier';
 
 function getJetClient(): Promise<JetClient> {
   const jetConnection = new Connection(
@@ -50,36 +47,6 @@ type UserObligation = {
 const healthyThreshodl = 1.5;
 const criticalThreshodl = 1.35;
 const liquidationThreshodl = 1.25;
-
-function getCratio(obligation: JetObligation) {
-  const positions: (MintPosition | undefined)[] = mints.map((m) => {
-    const position = obligation.positions.find((p) =>
-      p.reserve.tokenMint.equals(m.publicKey),
-    );
-    return (
-      position && {
-        ...m,
-        depositedUsd: position.collateralBalance
-          .muln(position.reserve.priceData.price || 1) // 1 to handle USDC
-          .divb(new BN(m.decimals))
-          .lamports.toNumber(),
-        borrowedUsd: position.loanBalance
-          .muln(position.reserve.priceData.price || 1) // 1 to handle USDC
-          .divb(new BN(m.decimals))
-          .lamports.toNumber(),
-      }
-    );
-  });
-  const totalDepositedUsd = positions
-    .filter((it) => it)
-    .reduce((acc, next) => acc + next!.depositedUsd, 0);
-  const totalBorrowedUsd = positions
-    .filter((it) => it)
-    .reduce((acc, next) => acc + next!.borrowedUsd, 0);
-  return totalBorrowedUsd === 0
-    ? 0
-    : Math.round((totalDepositedUsd / totalBorrowedUsd) * 100);
-}
 
 @Injectable()
 export class MonitoringService implements OnModuleInit, OnModuleDestroy {
@@ -300,19 +267,23 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
   }
 
   private constructUnhealthyWarningMessage(value: number): string {
-    return `⚠️ Warning! Your current collateral-ratio is ${value}%. It has dropped below the healthy threshold of ${healthyThreshodl}%. Please monitor your borrowing and lending closely. Your deposited assets will start being liquidated at ${liquidationThreshodl}%.`;
+    const displayValue = (value * 100).toFixed(2);
+    return `⚠️ Warning! Your current collateral-ratio is ${displayValue}%. It has dropped below the healthy threshold of ${healthyThreshodl * 100}%. Please monitor your borrowing and lending closely. Your deposited assets will start being liquidated at ${liquidationThreshodl * 100}%.`;
   }
 
   private constructHealthyMessage(value: number): string {
-    return `✅ Your current collateral-ratio is ${value}% - Your account is healthy.`;
+    const displayValue = (value * 100).toFixed(2);
+    return `✅ Your current collateral-ratio is ${displayValue}% - Your account is healthy.`;
   }
 
   private constructCriticalWarningMessage(value: number): string {
-    return `🚨 Warning! Your current collateral-ratio is ${value}%, which is below the critical threshold of ${criticalThreshodl}%. Please deposit more assets or repay your loans. Your deposited assets will start being liquidated at ${liquidationThreshodl}%.`;
+    const displayValue = (value * 100).toFixed(2);
+    return `🚨 Warning! Your current collateral-ratio is ${displayValue}%, which is below the critical threshold of ${criticalThreshodl * 100}%. Please deposit more assets or repay your loans. Your deposited assets will start being liquidated at ${liquidationThreshodl * 100}%.`;
   }
 
   private constructCriticalRecoveredMessage(value: number): string {
-    return `⚠️ Your current collateral-ratio is ${value}%, which is just above the critical threshold of ${criticalThreshodl}%. Jet recommends keeping your collateral-ratio above the healthy threshold of ${healthyThreshodl}%.`;
+    const displayValue = (value * 100).toFixed(2);
+    return `⚠️ Your current collateral-ratio is ${displayValue}%, which is just above the critical threshold of ${criticalThreshodl * 100}%. Jet recommends keeping your collateral-ratio above the healthy threshold of ${healthyThreshodl * 100}%.`;
   }
 
   async onModuleDestroy() {
@@ -322,19 +293,13 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
   private async getSubscribersObligations(
     subscribers: ResourceId[],
   ): Promise<SourceData<UserObligation>[]> {
-    this.logger.log(`Polling data for ${subscribers.length} subscribers`);
+    this.logger.log(`Polling obligations for ${subscribers.length} subscribers`);
     const jetClient = await getJetClient();
     const jetMarketAddress = jetClient.devnet === true ? JET_MARKET_ADDRESS_DEVNET : JET_MARKET_ADDRESS;
     const market = await JetMarket.load(jetClient, jetMarketAddress);
     const reserves = await JetReserve.loadMultiple(jetClient, market);
-    this.logger.log(`Using Jet Client:`, jetClient);
-    console.log(jetClient);
-    this.logger.log(`isDevnet:`, jetClient.devnet);
+    this.logger.log(`Jet Client isDevnet:`, jetClient.devnet);
     console.log(jetClient.devnet);
-    this.logger.log(`Using Jet Market:`, market);
-    console.log(market);
-    this.logger.log(`Using Jet Reserves:`, reserves);
-    console.log(reserves);
     const data: Promise<SourceData<UserObligation>>[] = subscribers.map(
       async (resourceId) => {
         this.logger.log(`Loading obligation for subscriber ${resourceId.toBase58()}.`);
@@ -344,7 +309,7 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
           reserves,
           resourceId,
         );
-        this.logger.log(`Found obligation:`, obligation);
+        this.logger.log(`Found obligation for subscriber ${resourceId.toBase58()}:`, obligation);
         console.log(obligation);
         this.logger.log("obligation.collateralRatio:");
         console.log(obligation.collateralRatio);
