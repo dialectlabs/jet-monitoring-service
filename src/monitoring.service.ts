@@ -18,12 +18,12 @@ import { Duration } from 'luxon';
 import {
   JET_MARKET_ADDRESS_DEVNET,
   JET_MARKET_ADDRESS,
-  //JetClient,
+  JetClient,
   JetMarket,
   JetObligation,
   JetReserve,
 } from '@jet-lab/jet-engine';
-import { JetClient } from "@jet-lab/jet-engine/dist/cjs/pools/client";
+//import { JetClient } from "@jet-lab/jet-engine/dist/cjs/pools/client";
 import { MintPosition, mints } from './jet-api';
 
 function getJetClient(): Promise<JetClient> {
