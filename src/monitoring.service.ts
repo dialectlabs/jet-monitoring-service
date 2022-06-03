@@ -344,6 +344,8 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
           reserves,
           resourceId,
         );
+        this.logger.log("obligation.collateralRatio:");
+        console.log(obligation.collateralRatio);
         const cratio = getCratio(obligation);
         this.logger.log(`Found obligation:`, obligation);
         console.log(obligation);
