@@ -24,6 +24,7 @@ import {
   JetMarket,
   JetObligation,
   JetReserve,
+  JetUserData,
 } from '@jet-lab/jet-engine';
 
 function getJetClient(): Promise<JetClient> {
@@ -48,6 +49,8 @@ type UserObligation = {
 const healthyThreshodl = 1.5;
 const criticalThreshodl = 1.35;
 const liquidationThreshodl = 1.25;
+const cratioMonitorMax = 2.5; // Note: this is to help filter extraneous data from Jet SDK
+const cratioMonitorMin = 1; // Note: this it to help filter extraneous data from jet SDK
 
 @Injectable()
 export class MonitoringService implements OnModuleInit, OnModuleDestroy {
@@ -78,7 +81,7 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
       .poll(
         async (subscribers: ResourceId[]) =>
           this.getSubscribersObligations(subscribers),
-        Duration.fromObject({ seconds: 5 }),
+        Duration.fromObject({ seconds: 300 }),
       )
       .transform<number, number>({
         keys: ['cratio'],
@@ -313,7 +316,9 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     const reserves = await JetReserve.loadMultiple(jetClient, market);
     this.logger.log(`Jet Client isDevnet:`, jetClient.devnet);
     console.log(jetClient.devnet);
-    const data: Promise<SourceData<UserObligation>>[] = subscribers.map(
+    let data: Promise<SourceData<UserObligation>>[] = [];
+    
+    subscribers.map(
       async (resourceId) => {
         this.logger.log(`Loading obligation for subscriber ${resourceId.toBase58()}.`);
         const obligation = await JetObligation.load(
@@ -322,20 +327,28 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
           reserves,
           resourceId,
         );
+
         this.logger.log(`Found obligation for subscriber ${resourceId.toBase58()}:`, obligation);
         console.log(obligation);
-        this.logger.log("obligation.collateralRatio:");
+        const obCratio = obligation.collateralRatio;
+        this.logger.log("obligation.collateralRatio:", obCratio);
         console.log(obligation.collateralRatio);
-        const sourceData: SourceData<UserObligation> = {
-          groupingKey: resourceId.toBase58(),
-          data: {
-            user: resourceId,
-            cratio: obligation.collateralRatio,
-          },
-        };
-        return sourceData;
+        if (obCratio > cratioMonitorMin && obCratio < cratioMonitorMax) {
+          const sourceData: SourceData<UserObligation> = {
+            groupingKey: resourceId.toBase58(),
+            data: {
+              user: resourceId,
+              cratio: obligation.collateralRatio,
+            },
+          };
+          data.push(Promise.resolve(sourceData));
+        } else {
+          this.logger.log("Seemingly extraneous data returned from Jet SDK, obligation.collateralRatio:", obCratio);
+          this.logger.log("^^^ Will not include in monitor pipeline.");
+        }
       },
     );
+
     const datum = await Promise.all(data);
     return datum;
   }
