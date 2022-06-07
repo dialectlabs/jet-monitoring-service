@@ -660,10 +660,10 @@
     "@types/yargs" "^16.0.0"
     chalk "^4.0.0"
 
-"@jet-lab/jet-engine@^0.3.7":
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/@jet-lab/jet-engine/-/jet-engine-0.3.7.tgz#e19452045e33e5591c96c974f76ed31b91156c79"
-  integrity sha512-NFvVN221vuPyaydYLbmt4PX8Sso9FejAgn+obY70tUtDRMP0wG64iLzEAsAFDHfiTkB4lrmEqSobv3iCD6hp/Q==
+"@jet-lab/jet-engine@^0.3.8":
+  version "0.3.8"
+  resolved "https://registry.yarnpkg.com/@jet-lab/jet-engine/-/jet-engine-0.3.8.tgz#02870efd2ec8c7c5bd5d7b1181bb73d1b73943bd"
+  integrity sha512-Mq1jN9dbn8rYFf+3Z5qtSmp19OCSDPraUzEM/4tukQPukKhhpgSVQ7wF3DfKg86lFTf/6Tnfs5wS4HM1vtf5JA==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@project-serum/serum" "^0.13.60"

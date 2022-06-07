@@ -317,16 +317,11 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     const reserves = await JetReserve.loadMultiple(jetClient, market);
     this.logger.log(`Jet Client isDevnet:`, jetClient.devnet);
     console.log(jetClient.devnet);
-    let data: Promise<SourceData<UserObligation>>[] = [];
 
-    await Promise.allSettled(
-      subscribers.map(
+    let userObligationsPromises: Promise<UserObligation>[] = subscribers.map(
         async (resourceId) => {
-          this.logger.log(`Loading obligation for subscriber ${resourceId.toBase58()}.`);
-          // Note: JetObligation.load() is a wrapper of create() that also loads market and reserves again
-          //       We instead directly use JetUser.load() and use create() to reduce RPC calls
+          this.logger.log(`Fetching obligation for subscriber ${resourceId.toBase58()}.`);
           const user = await JetUser.load(jetClient, market, reserves, resourceId)
-          // create obligation
           const obligation = JetObligation.create(
             market,
             user,
@@ -335,36 +330,41 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
           this.logger.log(`Found obligation for subscriber ${resourceId.toBase58()}:`, obligation);
           console.log(obligation);
           const obCratio = obligation.collateralRatio;
-          this.logger.log("obligation.collateralRatio:", obCratio);
-  
-          // Only ever monitor data that is within a reasonable range of what a user would care about
-          if (obCratio > cratioMonitorMin && obCratio < cratioMonitorMax) {
-            const sourceData: SourceData<UserObligation> = {
-              groupingKey: resourceId.toBase58(),
-              data: {
-                user: resourceId,
-                cratio: obCratio,
-              },
-            };
-            console.log("Push sourceData to data, will pass on to monitor pipeline:");
-            console.log(sourceData);
-            data.push(Promise.resolve(sourceData));
-          } else {
-            this.logger.log("Seemingly extraneous data returned from Jet SDK, obligation.collateralRatio:", obCratio);
-            this.logger.log("^^^ Will not include in monitor pipeline.");
-          }
+          return {
+            user: resourceId,
+            cratio: obCratio
+          } as UserObligation;
         },
-      ),
-    ).then((results) => results.forEach((result) => {
-      if (result.status === 'rejected') {
-        this.logger.warn(`An error occured while loading an obligation for a subscriber: ${result}`);
-      }
-    })
-    );
+      );
 
-    this.logger.log(`Found ${data.length} subscribers with obligations to monitor.`);
-    console.log(data);
-    const datum = await Promise.all(data);
-    return datum;
+    let userObligations: UserObligation[] = await Promise.allSettled(userObligationsPromises).then((results) => {
+      let ret: UserObligation[] = [];
+      results.forEach((result) => {
+        if (result.status === 'rejected') {
+          this.logger.error(`An error occurred while fetching an obligation from Jet SDK: `, result);
+        } else if (result.status === 'fulfilled') {
+          ret.push(result.value);
+        }
+      });
+      return ret;
+    })
+
+    // Only ever monitor data that is within a reasonable range of what a user would care about
+    userObligations = userObligations.filter((it) => {
+      it.cratio > cratioMonitorMin && it.cratio < cratioMonitorMax
+    });
+
+    this.logger.log(`Found ${userObligations.length} subscribers with an obligation to monitor.`);
+    console.log(userObligations);
+    return userObligations.map((it) => {
+      const sourceData: SourceData<UserObligation> = {
+        groupingKey: it.user.toBase58(),
+        data: {
+          user: it.user,
+          cratio: it.cratio,
+        },
+      };
+      return sourceData;
+    });
   }
 }
