@@ -324,7 +324,7 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
         this.logger.log(`Loading obligation for subscriber ${resourceId.toBase58()}.`);
         // Note: JetObligation.load() is a wrapper or create() that also loads market and reserves again
         //       We instead directly use JetUser.load() and use create() to reduce RPC calls
-        const user = await JetUser.load(jetClient, market, reserves, userAddress)
+        const user = await JetUser.load(jetClient, market, reserves, resourceId)
         // create obligation
         const obligation = JetObligation.create(
           market,
