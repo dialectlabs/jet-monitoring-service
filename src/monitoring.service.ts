@@ -82,7 +82,7 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
       .poll(
         async (subscribers: ResourceId[]) =>
           this.getSubscribersObligations(subscribers),
-        Duration.fromObject({ seconds: 300 }),
+        Duration.fromObject({ seconds: 60 }),
       )
       .transform<number, number>({
         keys: ['cratio'],
