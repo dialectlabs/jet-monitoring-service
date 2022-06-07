@@ -25,6 +25,7 @@ import {
   JetObligation,
   JetReserve,
   JetUserData,
+  JetUser,
 } from '@jet-lab/jet-engine';
 
 function getJetClient(): Promise<JetClient> {
@@ -321,24 +322,27 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     subscribers.map(
       async (resourceId) => {
         this.logger.log(`Loading obligation for subscriber ${resourceId.toBase58()}.`);
-        const obligation = await JetObligation.load(
-          jetClient,
-          jetMarketAddress,
-          reserves,
-          resourceId,
-        );
-
+        // Note: JetObligation.load() is a wrapper or create() that also loads market and reserves again
+        //       We instead directly use JetUser.load() and use create() to reduce RPC calls
+        const user = await JetUser.load(jetClient, market, reserves, userAddress)
+        // create obligation
+        const obligation = JetObligation.create(
+          market,
+          user,
+          reserves.map(reserve => reserve.data)
+        )
         this.logger.log(`Found obligation for subscriber ${resourceId.toBase58()}:`, obligation);
         console.log(obligation);
         const obCratio = obligation.collateralRatio;
         this.logger.log("obligation.collateralRatio:", obCratio);
-        console.log(obligation.collateralRatio);
+
+        // Only ever monitor data that is within a reasonable range of what a user would care about
         if (obCratio > cratioMonitorMin && obCratio < cratioMonitorMax) {
           const sourceData: SourceData<UserObligation> = {
             groupingKey: resourceId.toBase58(),
             data: {
               user: resourceId,
-              cratio: obligation.collateralRatio,
+              cratio: obCratio,
             },
           };
           data.push(Promise.resolve(sourceData));
