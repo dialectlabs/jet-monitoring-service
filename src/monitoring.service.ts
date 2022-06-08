@@ -316,7 +316,6 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     const market = await JetMarket.load(jetClient, jetMarketAddress);
     const reserves = await JetReserve.loadMultiple(jetClient, market);
     this.logger.log(`Jet Client isDevnet:`, jetClient.devnet);
-    console.log(jetClient.devnet);
 
     let userObligationsPromises: Promise<UserObligation>[] = subscribers.map(
         async (resourceId) => {
@@ -348,11 +347,13 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
       });
       return ret;
     })
+    console.log("userObligations before filter:", userObligations);
 
     // Only ever monitor data that is within a reasonable range of what a user would care about
     userObligations = userObligations.filter((it) => {
-      it.cratio > cratioMonitorMin && it.cratio < cratioMonitorMax
+      return (it.cratio > cratioMonitorMin && it.cratio < cratioMonitorMax);
     });
+    console.log("userObligations after filter:", userObligations);
 
     this.logger.log(`Found ${userObligations.length} subscribers with an obligation to monitor.`);
     console.log(userObligations);
