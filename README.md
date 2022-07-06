@@ -1,9 +1,15 @@
-# Monitoring service
+# Jet-monitoring-service
 
-A reference implementation of a service running `@dialectlabs/monitor`.
-See https://github.com/dialectlabs/monitor for details on the notifications module.
+A service running `@dialectlabs/monitor` to notify Jet users when their collateral balance becomes unhealthy and/or nearing liquidation.
+Users can subscribe to receive notifications directly to their wallet inbox (on-chain Dialect thread), via email, or telegram. 
+Use the Jet decentralized borrowing and lending app at https://app.jetprotocol.io/ and subscribe to notifications via the in the top right corner.
 
-## Development
+The service is currently hosted with the Dialect web3 cloud hosting service.
+See https://github.com/dialectlabs/monitor for details on the monitor module.
+
+This code is open source. To contribute, see the development section below.
+
+## Local Development
 
 ### Prerequisites
 
@@ -27,7 +33,7 @@ Please follow the instructions in https://github.com/dialectlabs/protocol#local-
 
 ### Running locally
 
-#### Step 1. Generate a new keypair for monitoring monitoring service and fund it
+#### Step 1. Generate a new keypair for monitoring service and fund it
 
 ```bash
 export your_path=~/projects/dialect
