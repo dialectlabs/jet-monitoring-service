@@ -2,7 +2,8 @@
 
 A service running `@dialectlabs/monitor` to notify Jet users when their collateral balance becomes unhealthy and/or nearing liquidation.
 Users can subscribe to receive notifications directly to their wallet inbox (on-chain Dialect thread), via email, or telegram. 
-Use the Jet decentralized borrowing and lending app at https://app.jetprotocol.io/ and subscribe to notifications via the in the top right corner.
+
+Use the Jet decentralized borrowing and lending app at https://app.jetprotocol.io/ and subscribe to notifications via the notification bell in the top right corner.
 
 The service is currently hosted with the Dialect web3 cloud hosting service.
 See https://github.com/dialectlabs/monitor for details on the monitor module.
