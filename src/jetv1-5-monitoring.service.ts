@@ -17,7 +17,11 @@ import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { BN, Wallet } from '@project-serum/anchor';
 import { AnchorProvider } from 'anchor-new';
 import { Duration } from 'luxon';
+import { MarginAccount, MarginClient, PoolManager } from '@jet-lab/margin'
 // TODO import Jet MarginAccount etc
+
+//devnet or mainnet flag
+const cluster = 'devnet'
 
 type UserObligationV1_5 = {
   user: PublicKey;
@@ -25,11 +29,13 @@ type UserObligationV1_5 = {
 };
 
 // Note: Jet v1.5 / v2 riskIndicator has different thresholds than v1 c-ratio
-const healthyThreshodl = 0.8;
-const criticalThreshodl = 0.9;
-const liquidationThreshodl = 1;
+//Jet v2 risk indicator ranges from 0 to 1. 0 is zero risk and 1 is liquidation level. Collateral-ratio is deprecated. 
+//Rik indicator is calculated as such: required collateral/effective collateral 
+const warningThreshold = MarginAccount.RISK_WARNING_LEVEL;
+const criticalThreshold = MarginAccount.RISK_CRITICAL_LEVEL;
+const liquidationThreshold = MarginAccount.RISK_LIQUIDATION_LEVEL; //at 1, users will start getting liquidated
 const riskIndicatorMonitorMax = 1.5; // Note: this is to help filter extraneous data from Jet SDK
-const riskIndicatorMonitorMin = 0; // Note: this it to help filter extraneous data from jet SDK
+const riskIndicatorMonitorMin = 0; // Note: this it to help filter extraneous data from jet SDK. At 0 could mean users have not deposited any collateral or have not borrowed any asset
 
 @Injectable()
 export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
@@ -68,8 +74,8 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
           Pipelines.threshold(
             {
               type: 'rising-edge',
-              threshold: healthyThreshodl,
-              limit: criticalThreshodl,
+              threshold: warningThreshold,
+              limit: criticalThreshold,
             },
             {
               type: 'throttle-time',
@@ -114,7 +120,7 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
           Pipelines.threshold(
             {
               type: 'falling-edge',
-              threshold: healthyThreshodl,
+              threshold: warningThreshold,
             },
             {
               type: 'throttle-time',
@@ -159,7 +165,7 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
           Pipelines.threshold(
             {
               type: 'rising-edge',
-              threshold: criticalThreshodl,
+              threshold: criticalThreshold,
             },
             {
               type: 'throttle-time',
@@ -204,8 +210,8 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
           Pipelines.threshold(
             {
               type: 'falling-edge',
-              threshold: criticalThreshodl,
-              limit: healthyThreshodl,
+              threshold: criticalThreshold,
+              limit: warningThreshold,
             },
             {
               type: 'throttle-time',
@@ -254,7 +260,7 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
     console.log(`Context: `, ctx.context);
     console.log(`Value: `, ctx.value);
     const displayValue = (ctx.value * 100).toFixed(2);
-    return `⚠️ Warning! Your current risk-indicator is ${displayValue}%. It has gone above the healthy threshold of ${healthyThreshodl * 100}%. Please monitor your borrowing and lending closely. Your deposited assets will start being liquidated at ${liquidationThreshodl * 100}%.`;
+    return `⚠️ Warning! Your current risk-indicator is ${displayValue}%. It has gone above the healthy threshold of ${warningThreshold * 100}%. Please monitor your borrowing and lending closely. Your deposited assets will start being liquidated at ${liquidationThreshold * 100}%.`;
   }
 
   private constructHealthyMessage(ctx: Data<number, UserObligationV1_5>): string {
@@ -270,7 +276,7 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
     console.log(`Context: `, ctx.context);
     console.log(`Value: `, ctx.value);
     const displayValue = (ctx.value * 100).toFixed(2);
-    return `🚨 Warning! Your current risk-indicator is ${displayValue}%, which is above the critical threshold of ${criticalThreshodl * 100}%. Please deposit more assets or repay your loans. Your deposited assets will start being liquidated at ${liquidationThreshodl * 100}%.`;
+    return `🚨 Warning! Your current risk-indicator is ${displayValue}%, which is above the critical threshold of ${criticalThreshold * 100}%. Please deposit more assets or repay your loans. Your deposited assets will start being liquidated at ${liquidationThreshold * 100}%.`;
   }
 
   private constructCriticalRecoveredMessage(ctx: Data<number, UserObligationV1_5>): string {
@@ -278,7 +284,7 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
     console.log(`Context: `, ctx.context);
     console.log(`Value: `, ctx.value);
     const displayValue = (ctx.value * 100).toFixed(2);
-    return `⚠️ Your current risk-indicator is ${displayValue}%, which is just below the critical threshold of ${criticalThreshodl * 100}%. Jet recommends keeping your risk-indicator below the healthy threshold of ${healthyThreshodl * 100}%.`;
+    return `⚠️ Your current risk-indicator is ${displayValue}%, which is just below the critical threshold of ${criticalThreshold * 100}%. Jet recommends keeping your risk-indicator below the healthy threshold of ${warningThreshold * 100}%.`;
   }
 
   async onModuleDestroy() {
@@ -291,7 +297,7 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
     this.logger.log(`Polling v1.5 margin accounts for ${subscribers.length} subscribers`);
 
     // Load JetV2 margin pools
-    const config = MarginClient.getConfig('devnet')
+    const config = MarginClient.getConfig(cluster)
     const connection = new Connection(process.env.RPC_URL ?? 'https://api.devnet.solana.com', 'recent')
     const options = AnchorProvider.defaultOptions()
     const wallet = undefined as any as Wallet
@@ -301,7 +307,7 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
     const pools = await poolManager.loadAll()
     //this.logger.log(`Jet MarginClient is devnet?`, TODO);
 
-    let userMarginAccountsPromises: Promise<UserObligationV1_5>[] = subscribers.map(
+    let userMarginAccountsPromises: Promise<UserObligationV1_5>[]  = subscribers.map(
         async (resourceId) => {
           this.logger.log(`Fetching v1.5 marginAccount for subscriber ${resourceId.toBase58()}.`);
 
@@ -318,19 +324,14 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
               owner: resourceId.toBase58(),
           });
 
-          if (marginAccounts) {
-            console.log(`Public key 6XEn2q37nqsYQB5R79nueGi6n3uhgjiDwxoJeAVzWvaS risk indicator is ${marginAccounts[0].riskIndicator}`)
-
-            this.logger.log(`Found marginAccount for subscriber ${resourceId.toBase58()}:`, marginAccounts);
-            console.log(marginAccounts[0].riskIndicator);
-            const riskIndicator = marginAccounts[0].riskIndicator;
-            return {
-              user: resourceId,
-              riskIndicator: riskIndicator
-            } as UserObligationV1_5;
-          } else {
-            console.log(`Unable to get margin accounts for ${resourceId.toBase58()}`);
-          }
+          console.log(`Public key ${resourceId.toBase58()} risk indicator is ${marginAccounts[0].riskIndicator}`)
+          this.logger.log(`Found marginAccount for subscriber ${resourceId.toBase58()}:`, marginAccounts);
+          console.log(marginAccounts[0].riskIndicator);
+          const riskIndicator = marginAccounts[0].riskIndicator;//jet v2 program allows users to multiple margin accounts but in this v1.5 case, we only need to get the first one
+          return {
+            user: resourceId,
+            riskIndicator: riskIndicator
+          } as UserObligationV1_5;
         },
       );
 
@@ -341,7 +342,7 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
           this.logger.error(`An error occurred while fetching a margin account from Jet SDK: `, result);
         } else if (result.status === 'fulfilled') {
           ret.push(result.value);
-        }
+        } 
       });
       return ret;
     })
