@@ -24,6 +24,7 @@
     "@dialectlabs/monitor": "^2.1.0",
     "@dialectlabs/web3": "^0.3.1",
     "@jet-lab/jet-engine": "^0.3.8",
+    "@jet-lab/margin": "0.1.45",
     "@nestjs/common": "^8.0.0",
     "@nestjs/core": "^8.0.0",
     "@nestjs/platform-express": "^8.0.0",
