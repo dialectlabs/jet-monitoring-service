@@ -18,9 +18,9 @@ import { BN, Wallet } from '@project-serum/anchor';
 import { AnchorProvider } from 'anchor-new';
 import { Duration } from 'luxon';
 import { MarginAccount, MarginClient, PoolManager } from '@jet-lab/margin'
-// TODO import Jet MarginAccount etc
 
 //devnet or mainnet flag
+// TODO determine this based off env var when ready for prod launch
 const cluster = 'devnet'
 
 type UserObligationV1_5 = {
