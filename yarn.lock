@@ -680,10 +680,10 @@
     react "^17.0.0"
     react-dom "^17.0.0"
 
-"@jet-lab/margin@0.1.45":
-  version "0.1.45"
-  resolved "https://registry.yarnpkg.com/@jet-lab/margin/-/margin-0.1.45.tgz#c355ba45aa021fc2ed0f0b139d497a705d53baa9"
-  integrity sha512-WigUzoeiBrBGNb5HKY5fpNbT7QCNVv8tz5xcUVgRVo5e7gHeYKnBaD3QDRF5EEHvn6vzTN3B18QKikIx5YLx+Q==
+"@jet-lab/margin@0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@jet-lab/margin/-/margin-0.2.1.tgz#aac49129fbc1b784f1954c90e5791b78d931a541"
+  integrity sha512-ki/mB54Hu2fKXHR0JXcTYVHo0hDSt6K+zsh4mLAdSS4zvPESTxwO6d8eYt3iPCmrv4+HAOYhEey/hd+tZJH2hA==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@project-serum/serum" "^0.13.65"

@@ -297,7 +297,7 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
     this.logger.log(`Polling v1.5 margin accounts for ${subscribers.length} subscribers`);
 
     // Load JetV2 margin pools
-    const config = MarginClient.getConfig(cluster)
+    const config = await MarginClient.getConfig(cluster)
     const connection = new Connection(process.env.RPC_URL ?? 'https://api.devnet.solana.com', 'recent')
     const options = AnchorProvider.defaultOptions()
     const wallet = undefined as any as Wallet
