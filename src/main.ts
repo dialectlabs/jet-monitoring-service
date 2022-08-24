@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { MonitoringServiceModule } from './monitoring-service.module';
+import './shim';
 
 async function bootstrap() {
   const app = await NestFactory.create(MonitoringServiceModule, {

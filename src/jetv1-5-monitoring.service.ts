@@ -19,11 +19,9 @@ import { AnchorProvider } from 'anchor-new';
 import { Duration } from 'luxon';
 import { MarginAccount, MarginClient, PoolManager } from '@jet-lab/margin'
 
-//devnet or mainnet flag
-// TODO determine this based off env var when ready for prod launch
-const cluster = 'devnet'
+const cluster = process.env.NETWORK_NAME! as 'devnet' | 'mainnet-beta';
 
-type UserObligationV1_5 = {
+export type UserObligationV1_5 = {
   user: PublicKey;
   riskIndicator: number;
 };
@@ -34,8 +32,8 @@ type UserObligationV1_5 = {
 const warningThreshold = MarginAccount.RISK_WARNING_LEVEL;
 const criticalThreshold = MarginAccount.RISK_CRITICAL_LEVEL;
 const liquidationThreshold = MarginAccount.RISK_LIQUIDATION_LEVEL; //at 1, users will start getting liquidated
-const riskIndicatorMonitorMax = 1.5; // Note: this is to help filter extraneous data from Jet SDK
-const riskIndicatorMonitorMin = 0; // Note: this it to help filter extraneous data from jet SDK. At 0 could mean users have not deposited any collateral or have not borrowed any asset
+export const riskIndicatorMonitorMax = 1.5; // Note: this is to help filter extraneous data from Jet SDK
+export const riskIndicatorMonitorMin = 0; // Note: this it to help filter extraneous data from jet SDK. At 0 could mean users have not deposited any collateral or have not borrowed any asset
 
 @Injectable()
 export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
@@ -297,15 +295,15 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
     this.logger.log(`Polling v1.5 margin accounts for ${subscribers.length} subscribers`);
 
     // Load JetV2 margin pools
-    const config = await MarginClient.getConfig(cluster)
-    const connection = new Connection(process.env.RPC_URL ?? 'https://api.devnet.solana.com', 'recent')
-    const options = AnchorProvider.defaultOptions()
-    const wallet = undefined as any as Wallet
-    const provider = new AnchorProvider(connection, wallet, options)
-    const programs = MarginClient.getPrograms(provider, config)
-    const poolManager = new PoolManager(programs, provider)
-    const pools = await poolManager.loadAll()
-    //this.logger.log(`Jet MarginClient is devnet?`, TODO);
+    const config = await MarginClient.getConfig(cluster);
+    const connection = new Connection(process.env.RPC_URL ?? 'https://api.devnet.solana.com', 'recent');
+    const options = AnchorProvider.defaultOptions();
+    const wallet = new Wallet(Keypair.generate());
+    const provider = new AnchorProvider(connection, wallet, options);
+    const programs = MarginClient.getPrograms(provider, config);
+    const poolManager = new PoolManager(programs, provider);
+    const pools = await poolManager.loadAll();
+    console.log(`Jet programs.config.url: ${programs.config.url}`);
 
     let userMarginAccountsPromises: Promise<UserObligationV1_5>[]  = subscribers.map(
         async (resourceId) => {
@@ -324,13 +322,19 @@ export class JetV1_5MonitoringService implements OnModuleInit, OnModuleDestroy {
               owner: resourceId.toBase58(),
           });
 
-          console.log(`Public key ${resourceId.toBase58()} risk indicator is ${marginAccounts[0].riskIndicator}`)
-          this.logger.log(`Found marginAccount for subscriber ${resourceId.toBase58()}:`, marginAccounts);
-          console.log(marginAccounts[0].riskIndicator);
-          const riskIndicator = marginAccounts[0].riskIndicator;//jet v2 program allows users to multiple margin accounts but in this v1.5 case, we only need to get the first one
+          let riskIndicator = 0;
+          // TODO revisit case where no margin account exists
+          if (marginAccounts) {
+            console.log(`Public key ${resourceId.toBase58()} risk indicator is ${marginAccounts[0].riskIndicator}`);
+            this.logger.log(`Found marginAccount for subscriber ${resourceId.toBase58()}:`, marginAccounts);
+            console.log(marginAccounts[0].riskIndicator);
+            // NOTE: jet v2 program allows users to multiple margin accounts but in this v1.5 case, we only need to get the first one
+            riskIndicator = marginAccounts[0].riskIndicator;
+          }
+
           return {
             user: resourceId,
-            riskIndicator: riskIndicator
+            riskIndicator: riskIndicator,
           } as UserObligationV1_5;
         },
       );
